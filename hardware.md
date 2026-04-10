@@ -11,7 +11,7 @@ Arduino is an open-source electronics platform that consists of hardware and sof
 Key points for beginners:
 - Arduino boards come in various models like Uno, Nano, and Mega, each with different sizes, pin counts, and features.
 - They typically operate at 5V or 3.3V and can be powered via USB or an external power supply.
-- Programming is done through a USB connection using the Arduino IDE, which is free and available for multiple operating systems.
+- Programming is done through a USB connection using the [Arduino IDE](https://docs.arduino.cc/software/ide/), which is free and available for multiple operating systems.
 - Unlike computers, Arduinos don't run an operating system; they execute simple programs in a continuous loop.
 - They have digital and analog pins for connecting sensors, buttons, LEDs, and other components.
 - Extensive libraries and add-on boards (shields) are available to extend functionality.
