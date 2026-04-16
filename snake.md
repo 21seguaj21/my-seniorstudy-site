@@ -499,6 +499,44 @@ void resetGame() {
 }
 ```
 
+{{< rawhtml >}}
+<!-- ACE EDITOR CONTAINER -->
+<div id="editor" style="height: 300px; width: 100%;">print("Hello Snake!")</div>
+
+<button id="runBtn" style="
+  margin-top: 10px;
+  padding: 8px 14px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+">Run Code</button>
+
+<pre id="output" style="
+  background: #111;
+  color: #0f0;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 4px;
+  min-height: 50px;
+"></pre>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+
+<script>
+  const editor = ace.edit("editor");
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/python");
+
+  document.getElementById("runBtn").onclick = () => {
+    const code = editor.getValue();
+    document.getElementById("output").textContent = "You wrote:\\n" + code;
+  };
+</script>
+{{< /rawhtml >}}
+
+
 ## Full sketch reference
 
 Use the complete sketch below after you have verified wiring and library installation.
