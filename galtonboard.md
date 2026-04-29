@@ -10,7 +10,7 @@ You will learn:
 
 - the historical significance of Sir Francis Galton’s discovery
 - how to interface a Raspberry Pi 5 with high-density LED matrices
-- how to write a physics simulation in Python using the `rgbmatrix` library
+- how to write a physics simulation in **Python** or **C++**
 - how to troubleshoot specific Pi 5 hardware and power failures
 
 <details>
@@ -21,6 +21,7 @@ You will learn:
 - [Step 1: The Raspberry Pi 5 Setup](#step-1-the-raspberry-pi-5-setup)
 - [Step 2: Wiring the Matrix](#step-2-wiring-the-matrix)
 - [Step 3: The Python Code](#step-3-the-python-code)
+- [Step 4: The C++ Code](#step-4-the-c-code)
 - [Common Problems: "It Just Stopped Working"](#common-problems-it-just-stopped-working)
 - [Tips](#tips)
 
@@ -150,37 +151,90 @@ try:
     run_simulation()
 except KeyboardInterrupt:
     print("Stopping...")
+## Step 4: The C++ Code
 
+For higher performance and smoother physics, you can use C++. Save this file as `galton.cpp`.
+
+```cpp
+#include "led-matrix.h"
+#include <unistd.h>
+#include <vector>
+#include <stdlib.h>
+
+using rgb_matrix::RGBMatrix;
+using rgb_matrix::Canvas;
+
+int main(int argc, char *argv[]) {
+    RGBMatrix::Options defaults;
+    defaults.rows = 32;
+    defaults.cols = 64;
+    defaults.hardware_mapping = "adafruit-hat";
+    defaults.gpio_slowdown = 4; // Essential for Pi 5
+
+    RGBMatrix *matrix = RGBMatrix::CreateFromOptions(defaults, argc, argv);
+    Canvas *canvas = matrix->CreateFrameCanvas();
+    int bins[64] = {0};
+
+    while (true) {
+        int bx = 32, by = 0;
+        while (by < 31 - bins[bx]) {
+            canvas->Clear();
+            
+            // Draw Pegs
+            for (int y = 4; y < 20; y += 2) 
+                for (int x = 32-y; x < 32+y; x+=4) canvas->SetPixel(x, y, 255, 255, 255);
+            
+            // Draw Bins
+            for (int x = 0; x < 64; x++)
+                for (int h = 0; h < bins[x]; h++) canvas->SetPixel(x, 31-h, 0, 0, 255);
+
+            // Bouncing logic
+            if (by >= 4 && by < 20 && by % 2 == 0) bx += (rand() % 2 == 0) ? 1 : -1;
+            by++;
+
+            canvas->SetPixel(bx, by, 255, 0, 0);
+            canvas = matrix->SwapOnVSync(canvas);
+            usleep(10000);
+        }
+        bins[bx]++;
+        if (bins[bx] > 12) for(int i=0; i<64; i++) bins[i] = 0;
+    }
+    return 0;
+}
+**To compile and run:**
+
+```bash
+g++ galton.cpp -lrgbmatrix -lpthread -o galton
+sudo ./galton
 ## Common Problems: "It Just Stopped Working"
 
 Hardware projects on the Pi 5 are temperamental. If your board suddenly goes dark or displays "static," check these common failure points:
 
 ### The "Flicker of Death"
-* The Problem: The image appears, but it flickers wildly or has horizontal lines.
-* The Fix: The Pi 5 is too fast. Increase `options.gpio_slowdown` to `5` or `6`. Also, ensure you disabled the audio in `config.txt`.
+* **The Problem:** The image appears, but it flickers wildly or has horizontal lines.
+* **The Fix:** The Pi 5 is too fast. Increase `options.gpio_slowdown` to `5` or `6`. Also, ensure you disabled the audio in `config.txt`.
 
 ### Sudden Blackout / Script Freezing
-* The Problem: The simulation was running, and then it just stopped or the screen turned black.
-* The Cause: Power Surge. As the "bins" fill up, more LEDs turn on. This increases the Amp draw. If your power supply is weak, the voltage drops, and the Pi or the Matrix controller crashes.
-* The Fix: Use a dedicated 5V 4A power supply. Do NOT power the matrix through the Pi’s USB port.
+* **The Problem:** The simulation was running, and then it just stopped or the screen turned black.
+* **The Cause:** **Power Surge.** As the "bins" fill up, more LEDs turn on. This increases the Amp draw. If your power supply is weak, the voltage drops, and the Pi or the Matrix controller crashes.
+* **The Fix:** Use a dedicated **5V 4A** power supply. Do **NOT** power the matrix through the Pi’s USB port.
 
 ### Permission Denied
-* The Problem: You get an error saying you can't access memory.
-* The Fix: The matrix library requires root access. You must run the script with `sudo`:
-    ```bash
-    sudo python3 galton.py
-    ```
+* **The Problem:** You get an error saying you can't access memory.
+* **The Fix:** The matrix library requires root access. You must run the script with `sudo`:
 
+```bash
+sudo python3 galton.py
 ### The "Zombie" Pixels
-* The Problem: Random pixels stay lit even after you clear the screen.
-* The Fix: This is usually a loose IDC (ribbon) cable. The Pi 5’s vibrations from the fan can sometimes wiggle these loose. Unplug and reseat the cable firmly.
+* **The Problem:** Random pixels stay lit even after you clear the screen.
+* **The Fix:** This is usually a loose **IDC (ribbon) cable**. The Pi 5’s vibrations from the fan can sometimes wiggle these loose. Unplug and reseat the cable firmly.
 
 ---
 
 ## Tips
 
-* Heat Management: The Pi 5 runs hot when processing matrix math. Use the official Active Cooler fan to prevent the Pi from slowing down mid-simulation.
-* Speed: If the simulation is too slow, decrease the `time.sleep(0.01)` value in the main loop.
-* Color: Modify the code to make the falling ball change color based on whether it bounces left or right!
+* **Heat Management:** The Pi 5 runs hot when processing matrix math. Use the official **Active Cooler** fan to prevent the Pi from slowing down mid-simulation.
+* **Speed:** If the simulation is too slow, decrease the `time.sleep(0.01)` (Python) or `usleep(10000)` (C++) value.
+* **Color:** Modify the code to make the falling ball change color based on whether it bounces left or right!
 
 [← Back to index](index.md)
